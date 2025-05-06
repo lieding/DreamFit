@@ -1,0 +1,47 @@
+inference_params:
+  height: 1024 # 1024
+  width: 768 # 768
+  ref_height: 768
+  ref_width: 512
+model_path: src.flux.model_dreamfit.Flux
+
+## commm params
+model_type: "flux-dev"
+name: null
+repo_id: null
+device: "cuda"
+offload: false
+timestep_to_start_cfg:  51
+true_gs: 3.5
+seed:  16414308815
+guidance: 4
+num_steps: 50
+
+neg_prompt: ""
+num_images_per_prompt: 3
+# save_path: "."
+
+## ipa param
+use_ip: False #
+ip_scale: 1.0
+neg_ip_scale: 1.0
+ip_local_path: null
+ip_name: null
+ip_repo_id: null
+image_encoder_path: null
+
+## ctlnet param
+use_controlnet: False
+ctlnet_local_path: null
+control_weight: 1.0
+
+## lora param
+rank:   32
+network_alpha:  16
+single_blocks: null #"1,2,3,4"
+double_blocks: null
+use_lora: True
+lora_weight:  1.0
+lora_local_path: "pretrained_models/flux_tryon.bin"
+lora_name: null
+lora_repo_id: null

@@ -1,0 +1,81 @@
+model:
+  target: src.stablediffusion.DreamFit_inference
+  params:
+    prediction_type: 'eps'
+    ref_names: ["cloth"]
+    att_cond_names: ['text']
+    proj_lora_rank: 64
+
+    target_unet: 
+      target: src.stablediffusion.unet.UNet2DModel
+      params:
+        in_channels: 4  # garment 2 person without inpainting 
+        out_channels: 4 # image latent
+        ch: 320
+        ch_mult: [1,2,4,4]
+        down_attn: [True,True,True,False]
+        down_self_attn: [True,True,True,True]
+        mid_self_attn: True
+        up_attn: [False,True,True,True]
+        up_self_attn : [True,True,True,True]
+        num_res_blocks: 2
+        n_heads: 8
+        d_head: -1
+        use_linear_in_transformer: False
+        transformer_depth: 1
+        context_dim: 768
+        use_checkpoint: False # False for training without grad checkpointing
+        use_extra_embedding: False
+
+    ref_unet: 
+      target: src.stablediffusion.unet.UNet2DModel
+      params:
+        in_channels: 4
+        out_channels: 4 # image latent
+        ch: 320
+        ch_mult: [1,2,4,4]
+        down_attn: [True,True,True,False]
+        down_self_attn: [True,True,True,True]
+        mid_self_attn: True
+        up_attn: [False,True,True,True]
+        up_self_attn : [True,True,True,True]
+        num_res_blocks: 2
+        n_heads: 8
+        d_head: -1
+        use_linear_in_transformer: False
+        transformer_depth: 1
+        context_dim: 768
+        use_checkpoint: False # False for training without grad
+        use_extra_embedding: False
+        use_lora: True
+        rank: 64
+        unet_ref_flag: True
+        ref_fuse_stage: ['mid', 'decoder']
+
+    vae:
+      target: src.stablediffusion.vae.AutoencoderKL
+      params:
+        in_channels: 3
+        embed_dim: 4
+        z_channels: 4
+        double_z: true
+        ch: 128
+        ch_mult: [1,2,4,4]
+        num_res_blocks: 2
+        dropout: 0.0
+        scale_factor: 0.18215
+
+    text_encoder:
+      target: src.stablediffusion.encoders.FrozenCLIPEmbedder
+      params:
+        model_path: pretrained_models/stable-diffusion-v1-5
+
+    noise_scheduler:
+        target: src.stablediffusion.schedulers.DDPMScheduler
+        params:
+          num_train_timesteps: 1000 
+          beta_start: 0.00085
+          beta_end: 0.0120
+          beta_schedule: scaled_linear #scaled_linear
+          clip_sample: False
+          steps_offset: 1
