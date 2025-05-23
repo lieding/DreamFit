@@ -93,7 +93,7 @@ def main():
     height = config.inference_params.height
     width = config.inference_params.width
     init_seed = args.seed
-    size = (width, height) 
+    size = (384, 384) 
 
     # input 
     save_dir = args.save_dir

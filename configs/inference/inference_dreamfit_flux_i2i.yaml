@@ -1,6 +1,6 @@
 inference_params:
-  height: 768 # 1024
-  width: 576 # 768
+  height: 1024 # 1024
+  width: 768 # 768
 model_path: src.flux.model_dreamfit.Flux
 
 ## commm params
@@ -8,7 +8,7 @@ model_type: "flux-dev"
 name: null
 repo_id: null
 device: "cuda"
-offload: false
+offload: True
 timestep_to_start_cfg:  51
 true_gs: 3.5
 seed:  164143088151

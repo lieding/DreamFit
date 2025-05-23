@@ -380,7 +380,7 @@ class XFluxPipeline:
 
             if self.offload:
                 self.offload_model_to_cpu(self.t5, self.clip)
-                #self.model = self.model.to(self.device)
+                self.model = self.model.to(self.device)
 
             if self.controlnet_loaded:
                 if controlnet_image is not None:
@@ -454,12 +454,12 @@ class XFluxPipeline:
                 )
 
             if self.offload:
-                #self.offload_model_to_cpu(self.model)
-                #self.ae.decoder.to(x.device)
+                self.offload_model_to_cpu(self.model)
+                self.ae.decoder.to(x.device)
             
             x = unpack(x.float(), height, width)
             x = self.ae.decode(x)
-            #self.offload_model_to_cpu(self.ae.decoder)
+            self.offload_model_to_cpu(self.ae.decoder)
 
         x1 = x.clamp(-1, 1)
         x1 = rearrange(x1[-1], "c h w -> h w c")
