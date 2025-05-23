@@ -41,6 +41,8 @@ from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers import FluxControlNetModel
 from transformers import CLIPVisionModelWithProjection, CLIPImageProcessor
 
+from src.flux.util import TORCH_FP8
+
 class XFluxPipeline:
     def __init__(self, model_type, device, offload: bool = False, image_encoder_path="", lora_path=None, model_path=None):
         self.device = torch.device(device)
@@ -49,13 +51,13 @@ class XFluxPipeline:
         self.lora_path = lora_path
         self.clip = load_clip(self.device)
         self.t5 = load_t5(self.device, max_length=512)
-        self.ae = load_ae(model_type, device="cpu" if offload else self.device)
+        self.ae = load_ae(model_type, self.device)
 
         if "fp8" in model_type:
             self.model = load_flow_model_quintized(model_type, device="cpu" if offload else self.device)
         else:
             if model_path is None:
-                self.model = load_flow_model(model_type, device="cpu" if offload else self.device, lora_path=lora_path)
+                self.model = load_flow_model(model_type, self.device, lora_path=lora_path)
             else:
                 self.model = load_flow_model_by_type(model_type, device="cpu" if offload else self.device, lora_path=lora_path, model_type=model_path)
 
@@ -139,7 +141,7 @@ class XFluxPipeline:
                         lora_state_dict[k[len(name) + 1:]] = checkpoint[k] * lora_weight
 
                 lora_attn_procs[name].load_state_dict(lora_state_dict)
-                lora_attn_procs[name].to(self.device, dtype=torch.bfloat16)
+                lora_attn_procs[name].to(self.device, dtype=TORCH_FP8)
 
             elif name.startswith("single_blocks") and layer_index in single_blocks_idx:
                 print("setting LoRA Processor for", name)
@@ -153,7 +155,7 @@ class XFluxPipeline:
                         lora_state_dict[k[len(name) + 1:]] = checkpoint[k] * lora_weight
 
                 lora_attn_procs[name].load_state_dict(lora_state_dict)
-                lora_attn_procs[name].to(self.device, dtype=torch.bfloat16)
+                lora_attn_procs[name].to(self.device, dtype=TORCH_FP8)
 
             else:
                 lora_attn_procs[name] = attn_processor
@@ -186,7 +188,7 @@ class XFluxPipeline:
         # setup image embedding projection model
         self.improj = ImageProjModel(4096, 768, 4)
         self.improj.load_state_dict(proj)
-        self.improj = self.improj.to(self.device, dtype=torch.bfloat16)
+        self.improj = self.improj.to(self.device, dtype=TORCH_FP8)
 
         ip_attn_procs = {}
 
@@ -199,7 +201,7 @@ class XFluxPipeline:
             if ip_state_dict:
                 ip_attn_procs[name] = IPDoubleStreamBlockProcessor(4096, 3072)
                 ip_attn_procs[name].load_state_dict(ip_state_dict)
-                ip_attn_procs[name].to(self.device, dtype=torch.bfloat16)
+                ip_attn_procs[name].to(self.device, dtype=TORCH_FP8)
             else:
                 ip_attn_procs[name] = self.model.attn_processors[name]
 
@@ -210,14 +212,14 @@ class XFluxPipeline:
     def set_controlnet(self, control_type: str, local_path: str = None, repo_id: str = None, name: str = None, load_method='origin', use_annotator=False):
         self.model.to(self.device)
         if load_method == 'origin':
-            self.controlnet = load_controlnet(self.model_type, self.device).to(torch.bfloat16)
+            self.controlnet = load_controlnet(self.model_type, self.device).to(TORCH_FP8)
             checkpoint = load_checkpoint(local_path, repo_id, name)
             missing_keys, unexpected_keys = self.controlnet.load_state_dict(checkpoint, strict=False)
             print("missing_keys", missing_keys)
             print("unexcepted_keys", unexpected_keys)
             self.annotator = Annotator(control_type, self.device)
         elif load_method == 'diffusers':
-            self.controlnet = FluxControlNetModel.from_pretrained(local_path, torch_dtype=torch.bfloat16).to(self.device)
+            self.controlnet = FluxControlNetModel.from_pretrained(local_path, torch_dtype=TORCH_FP8).to(self.device)
         
         if use_annotator:
             self.annotator = Annotator(control_type, self.device)
@@ -239,7 +241,7 @@ class XFluxPipeline:
         image_prompt_embeds = self.image_encoder(
             image_prompt
         ).image_embeds.to(
-            device=self.device, dtype=torch.bfloat16,
+            device=self.device, dtype=TORCH_FP8,
         )        
         
         # encode image
@@ -285,12 +287,12 @@ class XFluxPipeline:
             ref_img_tensor = torch.from_numpy((np.array(ref_img) / 127.5) - 1)
             ref_img = ref_img_tensor.permute(
                 2, 0, 1).unsqueeze(0).to(torch.float32).to(self.device)
-            ref_img = self.ae.encode(ref_img).to(torch.bfloat16)
+            ref_img = self.ae.encode(ref_img).to(TORCH_FP8)
 
             neg_ref_img = torch.zeros_like(ref_img_tensor)
             neg_ref_img = neg_ref_img.permute(
                 2, 0, 1).unsqueeze(0).to(torch.float32).to(self.device)
-            neg_image_proj = self.ae.encode(neg_ref_img).to(torch.bfloat16)
+            neg_image_proj = self.ae.encode(neg_ref_img).to(TORCH_FP8)
 
         else:
             ref_prompts  = None
@@ -301,7 +303,7 @@ class XFluxPipeline:
                 controlnet_image = self.annotator(controlnet_image, width, height)
                 controlnet_image = torch.from_numpy((np.array(controlnet_image) / 127.5) - 1)
                 controlnet_image = controlnet_image.permute(
-                    2, 0, 1).unsqueeze(0).to(torch.bfloat16).to(self.device)
+                    2, 0, 1).unsqueeze(0).to(TORCH_FP8).to(self.device)
 
         return self.forward(
             prompt,
@@ -354,7 +356,7 @@ class XFluxPipeline:
 
         x = get_noise(
             1, height, width, device=self.device,
-            dtype=torch.bfloat16, seed=seed
+            dtype=TORCH_FP8, seed=seed
         )
         ### same as training
         timesteps = get_schedule(
@@ -378,7 +380,7 @@ class XFluxPipeline:
 
             if self.offload:
                 self.offload_model_to_cpu(self.t5, self.clip)
-                self.model = self.model.to(self.device)
+                #self.model = self.model.to(self.device)
 
             if self.controlnet_loaded:
                 if controlnet_image is not None:
@@ -391,11 +393,11 @@ class XFluxPipeline:
                                                 batch_size=1,
                                                 num_images_per_prompt=1,
                                                 device=self.device,
-                                                dtype=torch.bfloat16,
+                                                dtype=TORCH_FP8,
                                                 pose_image=pose_image,
                                         )
                     else:
-                        controlnet_image = self.ae.encode(controlnet_image.to(dtype=torch.float)).to(torch.bfloat16)
+                        controlnet_image = self.ae.encode(controlnet_image.to(dtype=torch.float)).to(TORCH_FP8)
                         if self.controlnet.input_hint_block is None:
                             # pack
                             height_control_image, width_control_image = controlnet_image.shape[2:]
@@ -452,12 +454,12 @@ class XFluxPipeline:
                 )
 
             if self.offload:
-                self.offload_model_to_cpu(self.model)
-                self.ae.decoder.to(x.device)
+                #self.offload_model_to_cpu(self.model)
+                #self.ae.decoder.to(x.device)
             
             x = unpack(x.float(), height, width)
             x = self.ae.decode(x)
-            self.offload_model_to_cpu(self.ae.decoder)
+            #self.offload_model_to_cpu(self.ae.decoder)
 
         x1 = x.clamp(-1, 1)
         x1 = rearrange(x1[-1], "c h w -> h w c")

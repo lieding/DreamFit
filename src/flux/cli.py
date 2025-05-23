@@ -29,6 +29,8 @@ from flux.util import (configs, embed_watermark, load_ae, load_clip,
                        load_flow_model, load_t5)
 from transformers import pipeline
 
+from src.flux.util import TORCH_FP8
+
 NSFW_THRESHOLD = 0.85
 
 @dataclass
@@ -200,7 +202,7 @@ def main(
             opts.height,
             opts.width,
             device=torch_device,
-            dtype=torch.bfloat16,
+            dtype=TORCH_FP8,
             seed=opts.seed,
         )
         opts.seed = None
@@ -228,7 +230,7 @@ def main(
 
         # decode latents to pixel space
         x = unpack(x.float(), opts.height, opts.width)
-        with torch.autocast(device_type=torch_device.type, dtype=torch.bfloat16):
+        with torch.autocast(device_type=torch_device.type, dtype=TORCH_FP8):
             x = ae.decode(x)
         t1 = time.perf_counter()
 

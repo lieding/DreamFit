@@ -1,6 +1,6 @@
 inference_params:
-  height: 1024 # 1024
-  width: 768 # 768
+  height: 768 # 1024
+  width: 576 # 768
 model_path: src.flux.model_dreamfit.Flux
 
 ## commm params

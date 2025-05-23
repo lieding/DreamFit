@@ -55,6 +55,8 @@ from .lora import LoRACompatibleConv, LoRACompatibleLinear, LoRAConv2dLayer, LoR
 from diffusers.models.lora import LoRACompatibleConv as LoRACompatibleConv_
 from diffusers.models.lora import LoRACompatibleLinear as LoRACompatibleLinear_
 
+TORCH_FP8 = torch.float8_e4m3fn # TORCH_FP8
+
 def get_class(string, reload=False):
     module, cls = string.rsplit(".", 1)
     if reload:
@@ -937,7 +939,7 @@ def load_flow_model(name: str, device: str | torch.device = "cuda", hf_download:
 
     # from .model import Flux, FluxParams
     with torch.device("meta" if ckpt_path is not None else device):
-        model = Flux(configs[name].params).to(torch.bfloat16)
+        model = Flux(configs[name].params).to(TORCH_FP8)
 
     if ckpt_path is not None:
         # load_sft doesn't support torch.device
@@ -972,7 +974,7 @@ def load_flow_model_by_type(name: str, device: str | torch.device = "cuda", hf_d
     # with torch.device("meta" if ckpt_path is not None else device):
     with torch.device(device):
         model_cls = get_class(model_type)
-        model = model_cls(configs[name].params).to(torch.bfloat16)
+        model = model_cls(configs[name].params).to(TORCH_FP8)
 
     if ckpt_path is not None:
         # load_sft doesn't support torch.device
@@ -1005,7 +1007,7 @@ def load_flow_model_quintized(name: str, device: str | torch.device = "cuda", hf
         ckpt_path = hf_hub_download(configs[name].repo_id, configs[name].repo_flow)
     json_path = hf_hub_download(configs[name].repo_id, 'flux_dev_quantization_map.json')
 
-    model = Flux(configs[name].params).to(torch.bfloat16)
+    model = Flux(configs[name].params).to(TORCH_FP8)
 
     print("Loading checkpoint")
     # load_sft doesn't support torch.device
@@ -1030,11 +1032,11 @@ def load_controlnet(name, device, transformer=None):
 
 def load_t5(device: str | torch.device = "cuda", max_length: int = 512) -> HFEmbedder:
     # max length 64, 128, 256 and 512 should work (if your sequence is short enough)
-    return HFEmbedder("xlabs-ai/xflux_text_encoders", max_length=max_length, torch_dtype=torch.bfloat16).to(device)
+    return HFEmbedder("xlabs-ai/xflux_text_encoders", max_length=max_length, torch_dtype=TORCH_FP8).to(device)
 
 
 def load_clip(device: str | torch.device = "cuda") -> HFEmbedder:
-    return HFEmbedder("openai/clip-vit-large-patch14", max_length=77, torch_dtype=torch.bfloat16).to(device)
+    return HFEmbedder("openai/clip-vit-large-patch14", max_length=77, torch_dtype=TORCH_FP8).to(device)
 
 
 def load_ae(name: str, device: str | torch.device = "cuda", hf_download: bool = True) -> AutoEncoder:
@@ -1199,8 +1201,8 @@ def make_model_fsdp(
         sync_module_states=sync_module_states,
         mixed_precision=MixedPrecision(
             param_dtype=param_dtype,
-            reduce_dtype=torch.bfloat16, # float32
-            buffer_dtype=torch.bfloat16, # float32
+            reduce_dtype=TORCH_FP8, # float32
+            buffer_dtype=TORCH_FP8, # float32
             keep_low_precision_grads=False,
             cast_forward_inputs=False, # True
             cast_root_forward_inputs=False, # True
@@ -1243,8 +1245,8 @@ def make_model_dit_fsdp(
         sync_module_states=sync_module_states,
         mixed_precision=MixedPrecision(
             param_dtype=param_dtype,
-            reduce_dtype=torch.bfloat16,
-            buffer_dtype=torch.bfloat16,
+            reduce_dtype=TORCH_FP8,
+            buffer_dtype=TORCH_FP8,
             keep_low_precision_grads=False,
             cast_forward_inputs=False, 
             cast_root_forward_inputs=False,
