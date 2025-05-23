@@ -55,7 +55,7 @@ from .lora import LoRACompatibleConv, LoRACompatibleLinear, LoRAConv2dLayer, LoR
 from diffusers.models.lora import LoRACompatibleConv as LoRACompatibleConv_
 from diffusers.models.lora import LoRACompatibleLinear as LoRACompatibleLinear_
 
-TORCH_FP8 = torch.float8_e4m3fn # TORCH_FP8
+TORCH_FP8 = torch.bfloat16 # TORCH_FP8
 
 def get_class(string, reload=False):
     module, cls = string.rsplit(".", 1)
