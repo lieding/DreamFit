@@ -68,7 +68,7 @@ model:
     text_encoder:
       target: src.stablediffusion.encoders.FrozenCLIPEmbedder
       params:
-        model_path: pretrained_models/stable-diffusion-v1-5
+        model_path: /home/featurize/work/pretrained_models
 
     noise_scheduler:
         target: src.stablediffusion.schedulers.DDPMScheduler
