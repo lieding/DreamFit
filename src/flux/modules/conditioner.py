@@ -25,15 +25,15 @@ class HFEmbedder(nn.Module):
         self.output_key = "pooler_output" if self.is_clip else "last_hidden_state"
 
         if self.is_clip:
-            clip_tokenizer_path = "pretrained_models/FLUX.1-dev/tokenizer"
-            clip_enc_path = "pretrained_models/FLUX.1-dev/text_encoder"
+            clip_tokenizer_path = "/home/featurize/work/pretrained_models/tokenizer"
+            clip_enc_path = "/home/featurize/work/pretrained_models/text_encoder"
             
             self.tokenizer: CLIPTokenizer = CLIPTokenizer.from_pretrained(clip_tokenizer_path, max_length=max_length)
             self.hf_module: CLIPTextModel = CLIPTextModel.from_pretrained(clip_enc_path, **hf_kwargs)
 
         else:
-            t5_tokenizer_path = "pretrained_models/FLUX.1-dev/tokenizer_2"
-            t5_enc_path = "pretrained_models/FLUX.1-dev/text_encoder_2"
+            t5_tokenizer_path = "/home/featurize/work/pretrained_models/tokenizer_2"
+            t5_enc_path = "/home/featurize/work/pretrained_models/text_encoder_2"
             self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(t5_tokenizer_path, max_length=max_length)
             self.hf_module: T5EncoderModel = T5EncoderModel.from_pretrained(t5_enc_path, **hf_kwargs)
 

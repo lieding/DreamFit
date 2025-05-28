@@ -42,6 +42,6 @@ single_blocks: null #"1,2,3,4"
 double_blocks: null
 use_lora: True
 lora_weight:  1.0
-lora_local_path: "pretrained_models/flux_tryon.bin"
+lora_local_path: "/home/featurize/work/pretrained_models/flux_tryon.bin"
 lora_name: null
 lora_repo_id: null
