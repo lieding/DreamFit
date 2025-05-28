@@ -446,8 +446,8 @@ class XFluxPipeline:
                     timestep_to_start_cfg=timestep_to_start_cfg,
                     neg_inp_cond=neg_inp_cond,
                     true_gs=true_gs,
-                    image_proj=image_proj,
-                    neg_image_proj=neg_image_proj,
+                    image_proj=None,
+                    neg_image_proj=None,
                     ip_scale=ip_scale,
                     neg_ip_scale=neg_ip_scale,
                     num_steps=num_steps
