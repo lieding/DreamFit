@@ -292,7 +292,19 @@ class XFluxPipeline:
             neg_ref_img = torch.zeros_like(ref_img_tensor)
             neg_ref_img = neg_ref_img.permute(
                 2, 0, 1).unsqueeze(0).to(torch.float32).to(self.device)
-            neg_image_proj = self.ae.encode(neg_ref_img).to(TORCH_FP8)
+
+            # Optimized: If neg_ref_img is all zeros, directly create a zero tensor for neg_image_proj to save VRAM.
+            if torch.all(neg_ref_img == 0):
+                num_resolutions = len(self.ae.encoder.down)
+                F = 2 ** (num_resolutions - 1)
+                z_channels = self.ae.encoder.conv_out.out_channels // 2
+                B = neg_ref_img.shape[0]
+                H_out = neg_ref_img.shape[2] // F
+                W_out = neg_ref_img.shape[3] // F
+                output_shape = (B, z_channels, H_out, W_out)
+                neg_image_proj = torch.zeros(output_shape, device=self.device, dtype=TORCH_FP8)
+            else:
+                neg_image_proj = self.ae.encode(neg_ref_img).to(TORCH_FP8)
 
         else:
             ref_prompts  = None
