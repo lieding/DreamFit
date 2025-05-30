@@ -409,7 +409,20 @@ class XFluxPipeline:
                                                 pose_image=pose_image,
                                         )
                     else:
-                        controlnet_image = self.ae.encode(controlnet_image.to(dtype=torch.float)).to(TORCH_FP8)
+                        float_controlnet_image = controlnet_image.to(dtype=torch.float) # Ensure input to AE is float
+                        # Optimized: If controlnet_image is all zeros, directly create a zero tensor to save VRAM.
+                        if torch.all(float_controlnet_image == 0):
+                            num_resolutions = len(self.ae.encoder.down)
+                            F = 2 ** (num_resolutions - 1)
+                            z_channels = self.ae.encoder.conv_out.out_channels // 2
+                            B = float_controlnet_image.shape[0]
+                            H_in = float_controlnet_image.shape[2]
+                            W_in = float_controlnet_image.shape[3]
+                            output_shape = (B, z_channels, H_in // F, W_in // F)
+                            controlnet_image = torch.zeros(output_shape, device=self.device, dtype=TORCH_FP8)
+                        else:
+                            controlnet_image = self.ae.encode(float_controlnet_image).to(TORCH_FP8)
+
                         if self.controlnet.input_hint_block is None:
                             # pack
                             height_control_image, width_control_image = controlnet_image.shape[2:]
@@ -517,8 +530,20 @@ class XFluxPipeline:
         masked_image = image.clone()
 
         # Encode to latents
-        image_latents = self.ae.encode(masked_image.to(dtype=torch.float))
-        image_latents = image_latents.to(dtype)
+        float_masked_image = masked_image.to(dtype=torch.float) # Ensure input to AE is float
+        # Optimized: If masked_image is all zeros, directly create a zero tensor for image_latents.
+        if torch.all(float_masked_image == 0):
+            num_resolutions = len(self.ae.encoder.down)
+            F = 2 ** (num_resolutions - 1)
+            z_channels = self.ae.encoder.conv_out.out_channels // 2
+            B = float_masked_image.shape[0]
+            H_in = float_masked_image.shape[2]
+            W_in = float_masked_image.shape[3]
+            output_shape = (B, z_channels, H_in // F, W_in // F)
+            image_latents = torch.zeros(output_shape, device=self.device, dtype=dtype) # Use the 'dtype' argument of the function
+        else:
+            image_latents = self.ae.encode(float_masked_image)
+            image_latents = image_latents.to(dtype) # Use the 'dtype' argument of the function
 
         mask = torch.nn.functional.interpolate(
             mask, size=(height // self.vae_scale_factor * 2, width // self.vae_scale_factor * 2)
@@ -534,8 +559,21 @@ class XFluxPipeline:
                 pose_image = self.image_processor.preprocess(pose_image, height=height, width=width)
             pose_image = pose_image.repeat_interleave(repeat_by, dim=0)
             pose_image = pose_image.to(device=device, dtype=dtype)
-            pose_latents = self.ae.encode(pose_image.to(dtype=torch.float))
-            pose_latents = pose_latents.to(dtype)
+
+            float_pose_image = pose_image.to(dtype=torch.float) # Ensure input to AE is float
+            # Optimized: If pose_image is all zeros, directly create a zero tensor for pose_latents.
+            if torch.all(float_pose_image == 0):
+                num_resolutions = len(self.ae.encoder.down)
+                F = 2 ** (num_resolutions - 1)
+                z_channels = self.ae.encoder.conv_out.out_channels // 2
+                B = float_pose_image.shape[0]
+                H_in = float_pose_image.shape[2]
+                W_in = float_pose_image.shape[3]
+                output_shape = (B, z_channels, H_in // F, W_in // F)
+                pose_latents = torch.zeros(output_shape, device=self.device, dtype=dtype) # Use the 'dtype' argument of the function
+            else:
+                pose_latents = self.ae.encode(float_pose_image)
+                pose_latents = pose_latents.to(dtype) # Use the 'dtype' argument of the function
             control_image = torch.cat([pose_latents, image_latents, mask], dim=1)
 
         # Pack cond latents( has been written in controlnet)
