@@ -43,7 +43,7 @@ from .model_dreamfit import Flux, FluxParams
 # from .model_ipa_kv import Flux, FluxParams
 from .controlnet import ControlNetFlux
 from .modules.autoencoder import AutoEncoder, AutoEncoderParams
-from .modules.conditioner import HFEmbedder
+from .modules.conditioner_optimised import HFEmbedder
 from .annotator.dwpose import DWposeDetector
 from .annotator.mlsd import MLSDdetector
 from .annotator.canny import CannyDetector

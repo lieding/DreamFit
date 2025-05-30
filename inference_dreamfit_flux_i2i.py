@@ -19,7 +19,7 @@ import PIL
 
 from omegaconf import OmegaConf
 
-from src.flux.xflux_pipeline_dreamfit import XFluxPipeline
+from src.flux.xflux_pipeline_dreamfit_optimised import XFluxPipeline
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple example of a training script.")
@@ -93,7 +93,7 @@ def main():
     height = config.inference_params.height
     width = config.inference_params.width
     init_seed = args.seed
-    size = (384, 384) 
+    size = (width, height) 
 
     # input 
     save_dir = args.save_dir
