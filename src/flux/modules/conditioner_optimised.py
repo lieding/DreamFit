@@ -15,7 +15,7 @@
 from torch import Tensor, nn
 from transformers import (CLIPTextModel, CLIPTokenizer, T5EncoderModel,
                           T5Tokenizer)
-from nunchaku import NunchakuT5EncoderModel
+#from nunchaku import NunchakuT5EncoderModel
 
 
 class HFEmbedder(nn.Module):
@@ -36,7 +36,7 @@ class HFEmbedder(nn.Module):
             t5_tokenizer_path = "/home/featurize/work/pretrained_models/tokenizer_2"
             t5_enc_path = "/home/featurize/work/pretrained_models/text_encoder_2"
             self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(t5_tokenizer_path, max_length=max_length)
-            self.hf_module: T5EncoderModel = T5EncoderModel.from_pretrained("t5_enc_path", **hf_kwargs)
+            self.hf_module: T5EncoderModel = T5EncoderModel.from_pretrained(t5_enc_path, **hf_kwargs)
 
         self.hf_module = self.hf_module.eval().requires_grad_(False)
 
