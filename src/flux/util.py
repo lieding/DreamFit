@@ -55,6 +55,8 @@ from .lora import LoRACompatibleConv, LoRACompatibleLinear, LoRAConv2dLayer, LoR
 from diffusers.models.lora import LoRACompatibleConv as LoRACompatibleConv_
 from diffusers.models.lora import LoRACompatibleLinear as LoRACompatibleLinear_
 
+from optimum.quanto import requantize
+
 TORCH_FP8 = torch.bfloat16 # TORCH_FP8
 
 def get_class(string, reload=False):

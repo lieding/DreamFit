@@ -24,3 +24,4 @@ scipy==1.15.2
 safetensors==0.5.3
 huggingface_hub==0.25
 numpy<2
+optimum-quanto==0.2.7
