@@ -36,7 +36,7 @@ class HFEmbedder(nn.Module):
             t5_tokenizer_path = "/home/featurize/work/pretrained_models/tokenizer_2"
             t5_enc_path = "/home/featurize/work/pretrained_models/text_encoder_2"
             self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(t5_tokenizer_path, max_length=max_length)
-            self.hf_module: T5EncoderModel = NunchakuT5EncoderModel.from_pretrained("mit-han-lab/nunchaku-t5/awq-int4-flux.1-t5xxl.safetensors")
+            self.hf_module: T5EncoderModel = NunchakuT5EncoderModel.from_pretrained("mit-han-lab/svdq-flux.1-t5")
 
         self.hf_module = self.hf_module.eval().requires_grad_(False)
 
