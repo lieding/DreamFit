@@ -386,6 +386,9 @@ class XFluxPipeline:
             
             if ref_img is not None:
                 inp_cloth = prepare(t5=self.t5, clip=self.clip, img=ref_img, prompt=ref_prompts)
+                # Free VRAM occupied by ref_img as it's no longer needed
+                del ref_img
+                torch.cuda.empty_cache()
             else:
                 inp_cloth = None
 
@@ -440,7 +443,7 @@ class XFluxPipeline:
                     true_gs=true_gs,
                     controlnet_gs=control_weight,
                     image_proj=image_proj,
-                    neg_image_proj=neg_image_proj,
+                    neg_image_proj=None,
                     ip_scale=ip_scale,
                     neg_ip_scale=neg_ip_scale,
                     control_mode=control_mode,

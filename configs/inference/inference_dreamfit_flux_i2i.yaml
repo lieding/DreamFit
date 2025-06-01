@@ -4,7 +4,7 @@ inference_params:
 model_path: src.flux.model_dreamfit.Flux
 
 ## commm params
-model_type: "flux-dev-fp8"
+model_type: "flux-dev"
 name: null
 repo_id: null
 device: "cuda"
