@@ -394,6 +394,10 @@ class XFluxPipeline:
 
             if self.offload:
                 self.offload_model_to_cpu(self.t5, self.clip)
+                used_mem = torch.cuda.memory_allocated() / 1024**2
+                cached_mem = torch.cuda.memory_reserved() / 1024**2
+                print(f"Used memory: {used_mem:.2f} MB")
+                print(f"Cached memory: {cached_mem:.2f} MB")
                 self.model = self.model.to(self.device)
 
             # GPU memory in MB
