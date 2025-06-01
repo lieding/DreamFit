@@ -57,7 +57,7 @@ from diffusers.models.lora import LoRACompatibleLinear as LoRACompatibleLinear_
 
 from optimum.quanto import requantize
 
-TORCH_FP8 = torch.bfloat16 # TORCH_FP8
+TORCH_FP8 = torch.bfloat16 # float8_e4m3fn
 
 def get_class(string, reload=False):
     module, cls = string.rsplit(".", 1)
