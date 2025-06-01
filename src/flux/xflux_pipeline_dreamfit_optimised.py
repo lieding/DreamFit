@@ -396,6 +396,13 @@ class XFluxPipeline:
                 self.offload_model_to_cpu(self.t5, self.clip)
                 self.model = self.model.to(self.device)
 
+            # GPU memory in MB
+            used_mem = torch.cuda.memory_allocated() / 1024**2
+            cached_mem = torch.cuda.memory_reserved() / 1024**2
+
+            print(f"Used memory: {used_mem:.2f} MB")
+            print(f"Cached memory: {cached_mem:.2f} MB")
+
             if self.controlnet_loaded:
                 if controlnet_image is not None:
                     if controlnet_mask is not None:
