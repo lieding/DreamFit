@@ -36,9 +36,9 @@ def get_noise(
         2 * math.ceil(height / 16),
         2 * math.ceil(width / 16),
         device=device,
-        dtype=dtype,
+        dtype=torch.bfloat16,
         generator=torch.Generator(device=device).manual_seed(seed),
-    )
+    ).to(dtype)
 
 def prepare_img(img: Tensor, inp: dict[str, Tensor]) -> dict[str, Tensor]:
     bs, c, h, w = img.shape

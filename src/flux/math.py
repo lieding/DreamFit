@@ -14,31 +14,13 @@ import torch
 from einops import rearrange
 from torch import Tensor
 
-from flash_attn import (
-    flash_attn_qkvpacked_func,
-    flash_attn_func,
-    flash_attn_varlen_func,
-)
-from flash_attn.bert_padding import pad_input, unpad_input
-
 
 def attention(q: Tensor, k: Tensor, v: Tensor, pe: Tensor, attn_mask: Tensor=None, use_flash_attn=True) -> Tensor:
     q, k = apply_rope(q, k, pe)
     
-    if use_flash_attn:
-        q = q.transpose(1, 2)
-        k = k.transpose(1, 2)
-        v = v.transpose(1, 2) # B H L D -> B L H D
-        
-        x = flash_attn_func(
-            q,
-            k,
-            v,
-        )
-        x = rearrange(x, "B L H D -> B L (H D)")
-    else:
-        x = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask)
-        x = rearrange(x, "B H L D -> B L (H D)")
+
+    x = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask)
+    x = rearrange(x, "B H L D -> B L (H D)")
 
     return x
 
