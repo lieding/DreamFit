@@ -388,7 +388,7 @@ class XFluxPipeline:
                 inp_cloth = prepare(t5=self.t5, clip=self.clip, img=ref_img, prompt=ref_prompts)
                 # Free VRAM occupied by ref_img as it's no longer needed
                 del ref_img
-                torch.cuda.empty_cache()
+                #torch.cuda.empty_cache()
             else:
                 inp_cloth = None
 
